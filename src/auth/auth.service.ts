@@ -241,8 +241,12 @@ export class AuthService {
         user = await this.prisma.user.findUnique({
           where: { email },
         });
-      } else {
+      } else if(role === Role.ORGANIZER) {
         user = await this.prisma.organizer.findUnique({
+          where: { email },
+        });
+      }else if(role === Role.ADMIN) {
+        user = await this.prisma.admin.findUnique({
           where: { email },
         });
       }
