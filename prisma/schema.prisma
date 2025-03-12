@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id         String  @id @default(uuid())
+  email      String  @unique
+  password   String
+  profilePic String?
+  name       String
+
+  notifications    Notification[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  
+  TicketsPayment   TicketsPayment[]
+  verificationCode String?
+  isVerified       Boolean          @default(false)
+}
+
+// Event Organizer Model
+model Organizer {
+  id                String                     @id @default(uuid())
+  email             String                     @unique
+  password          String
+  profilePic        String?
+  name              String
+  bankDetails       OrganizerBankDetails[]
+  verificationCode  String?
+  isVerified        Boolean                    @default(false)
+  eventsCreated     Event[]
+  payments          EventRegistrationPayment[]
+  notifications     Notification[]
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+}
+
+model OrganizerBankDetails {
+  id            String         @id @default(uuid())
+  organizerId   String
+  organizer     Organizer      @relation(fields: [organizerId], references: [id])
+  bankName      String
+  notifications Notification[]
+  accountNumber String
+}
+
+model AdminBankDetails {
+  id            String @id @default(uuid())
+  adminId       String
+  admin         Admin  @relation(fields: [adminId], references: [id])
+  bankName      String
+  accountNumber String
+}
+
+// Admin Model
+model Admin {
+  id               String             @id @default(uuid())
+  email            String             @unique
+  password         String
+  notifications    Notification[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  AdminBankDetails AdminBankDetails[]
+}
+
+// Event Model
+model Event {
+  id                       String                     @id @default(uuid())
+  title                    String
+  description              String
+  date                     DateTime
+  startTime                DateTime                  
+  endTime                  DateTime                   
+  capacity                 Int                        
+  location                 String
+  price                    Float
+  organizerId              String
+  organizer                Organizer                  @relation(fields: [organizerId], references: [id])
+  approvedByAdmin          Boolean                    @default(false)
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+
+  TicketsPayment TicketsPayment[]
+  EventRegistrationPayment EventRegistrationPayment[]
+}
+
+// Event Registration Model
+// model Tickets {
+//   id        String          @id @default(uuid())
+//   userId    String
+//   user      User            @relation(fields: [userId], references: [id])
+//   quantity  Int             @default(1)
+//   eventId   String
+//   event     Event           @relation(fields: [eventId], references: [id])
+//   paymentId String?
+//   payment   TicketsPayment? @relation(fields: [paymentId], references: [id])
+//   createdAt DateTime        @default(now())
+// }
+
+//Even Registration Payment Model
+
+// model EventRegistration {
+//   id          String                    @id @default(uuid())
+//   organizerId String
+//   organizer   Organizer                 @relation(fields: [id], references: [id])
+//   eventId     String                    @unique
+//   event       Event                     @relation(fields: [eventId], references: [id])
+//   paymentId   String?
+//   payment     EventRegistrationPayment? @relation(fields: [paymentId], references: [id])
+//   createdAt   DateTime                  @default(now())
+// }
+
+// Payment Model
+model EventRegistrationPayment {
+  id            String        @id @default(uuid())
+  amount        Float
+  screenshotUrl String
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  Organizer     Organizer    @relation(fields: [organizerId], references: [id])
+  organizerId   String
+
+
+  Event             Event            @relation(fields: [eventId], references: [id])
+  eventId           String
+}
+
+model TicketsPayment {
+  id             String        @id @default(uuid())
+  amount         Float
+  screenshotUrl  String
+  qrCodeUrl      String?
+  quantity       Int            
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  User           User        @relation(fields: [userId], references: [id])
+  userId         String
+  Event          Event       @relation(fields: [eventId], references: [id])
+  eventId        String
+
+}
+
+// Notification Model
+model Notification {
+  id                     String                @id @default(uuid())
+  userId                 String?
+  user                   User?                 @relation(fields: [userId], references: [id])
+  organizerId            String?
+  organizer              Organizer?            @relation(fields: [organizerId], references: [id])
+  adminId                String?
+  admin                  Admin?                @relation(fields: [adminId], references: [id])
+  message                String
+  createdAt              DateTime              @default(now())
+  OrganizerBankDetails   OrganizerBankDetails? @relation(fields: [organizerBankDetailsId], references: [id])
+  organizerBankDetailsId String?
+}
+
+// Enums
+enum Role {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
