@@ -15,10 +15,10 @@ model User {
   profilePic String?
   name       String
 
-  notifications    Notification[]
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
   TicketsPayment   TicketsPayment[]
   verificationCode String?
   isVerified       Boolean          @default(false)
@@ -26,20 +26,19 @@ model User {
 
 // Event Organizer Model
 model Organizer {
-  id                String                     @id @default(uuid())
-  email             String                     @unique
-  password          String
-  profilePic        String?
-  name              String
-  bankDetails       OrganizerBankDetails[]
-  verificationCode  String?
-  isVerified        Boolean                    @default(false)
-  eventsCreated     Event[]
-  payments          EventRegistrationPayment[]
-  notifications     Notification[]
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-
+  id               String                     @id @default(uuid())
+  email            String                     @unique
+  password         String
+  profilePic       String?
+  name             String
+  bankDetails      OrganizerBankDetails[]
+  verificationCode String?
+  isVerified       Boolean                    @default(false)
+  eventsCreated    Event[]
+  payments         EventRegistrationPayment[]
+  notifications    Notification[]
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 }
 
 model OrganizerBankDetails {
@@ -70,25 +69,37 @@ model Admin {
   AdminBankDetails AdminBankDetails[]
 }
 
+model EventCategory {
+  id        String   @id @default(uuid())
+  name      String
+  attachment String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events    Event[]
+}
+
 // Event Model
 model Event {
-  id                       String                     @id @default(uuid())
-  title                    String
-  description              String
-  date                     DateTime
-  startTime                DateTime                  
-  endTime                  DateTime                   
-  capacity                 Int                        
-  location                 String
-  price                    Float
-  organizerId              String
-  organizer                Organizer                  @relation(fields: [organizerId], references: [id])
-  approvedByAdmin          Boolean                    @default(false)
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
+  id              String    @id @default(uuid())
+  title           String
+  description     String
+  attachment String?
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int
+  location        String
+  price           Float
+  organizerId     String
+  organizer       Organizer @relation(fields: [organizerId], references: [id])
+  approvedByAdmin Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  TicketsPayment TicketsPayment[]
+  TicketsPayment           TicketsPayment[]
   EventRegistrationPayment EventRegistrationPayment[]
+  EventCategory            EventCategory?             @relation(fields: [eventCategoryId], references: [id])
+  eventCategoryId          String?
 }
 
 // Event Registration Model
@@ -125,28 +136,26 @@ model EventRegistrationPayment {
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  Organizer     Organizer    @relation(fields: [organizerId], references: [id])
+  Organizer     Organizer     @relation(fields: [organizerId], references: [id])
   organizerId   String
 
-
-  Event             Event            @relation(fields: [eventId], references: [id])
-  eventId           String
+  Event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
 }
 
 model TicketsPayment {
-  id             String        @id @default(uuid())
-  amount         Float
-  screenshotUrl  String
-  qrCodeUrl      String?
-  quantity       Int            
-  status         PaymentStatus @default(PENDING)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  User           User        @relation(fields: [userId], references: [id])
-  userId         String
-  Event          Event       @relation(fields: [eventId], references: [id])
-  eventId        String
-
+  id            String        @id @default(uuid())
+  amount        Float
+  screenshotUrl String
+  qrCodeUrl     String?
+  quantity      Int
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  User          User          @relation(fields: [userId], references: [id])
+  userId        String
+  Event         Event         @relation(fields: [eventId], references: [id])
+  eventId       String
 }
 
 // Notification Model

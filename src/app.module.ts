@@ -14,6 +14,7 @@ import { BankDetailsModule } from './organizer-bank-details/bank-details.module'
 import { AdminBankDetailsModule } from './admin-bank-details/admin-bank-details.module';
 import { ImageModule } from './image/image.module';
 import { TicketsPaymentModule } from './tickets-payment/tickets-payment.module';
+import { EventCategoryModule } from './event-category/event-category.module';
 
 @Module({
   imports: [
@@ -29,8 +30,7 @@ import { TicketsPaymentModule } from './tickets-payment/tickets-payment.module';
     BankDetailsModule,
     AdminBankDetailsModule,
     ImageModule,
-
-
+    EventCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

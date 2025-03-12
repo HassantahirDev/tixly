@@ -36,6 +36,28 @@ export class EventService {
     }
   }
 
+  async searchEvents(query: string) {
+    try {
+      const events = await this.prisma.event.findMany({
+        where: {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+            // { location: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+      });
+
+      return {
+        success: true,
+        data: events,
+        message: 'Events fetched successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException('Error fetching events.');
+    }
+  }
+
   async findOne(id: string, userId: string) {
     try {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });

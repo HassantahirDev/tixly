@@ -23,6 +23,13 @@ export class AdminController {
     return this.adminService.findAll();
   }
 
+  @Post("disapproveEventRegistrationPayment/:id")
+  @ApiOperation({ summary: 'Disapprove a Payment' })
+  @ApiResponse({ status: 200, description: 'The Payment has been successfully disapproved.' })
+  disapproveEventRegistrationPayment(@Param("id") id: string) {
+    return this.adminService.disapproveEventRegistrationPayment(id);
+  }
+
   @Post("approveEventRegistrationPayment/:id")
   @ApiOperation({ summary: 'Approve a Payment' })
   @ApiResponse({ status: 200, description: 'The Payment has been successfully approved.' })

@@ -13,6 +13,8 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { Role } from '@prisma/client';
 import { MailerService } from 'src/mailer/mailer.service';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -31,13 +33,23 @@ export class AuthService {
       });
 
       if (existingUser) {
-        throw new ConflictException('Email already exists');
+        throw new ConflictException('Email already exists in user');
+      }
+
+      const existingOrganizer = await this.prisma.organizer.findUnique({
+        where: { email },
+      });
+
+      if (existingOrganizer) {
+        throw new ConflictException('Email already exists in organizer');
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+      const verificationCode = Math.floor(
+        1000 + Math.random() * 9000,
+      ).toString();
       let user;
-      
+
       if (signUpDto.role === Role.USER) {
         user = await this.prisma.user.create({
           data: {
@@ -81,9 +93,43 @@ export class AuthService {
     }
   }
 
-  async sendVerificationCode(email: string, role: Role) {
+  async updatePassword(updatePasswordDto: UpdatePasswordDto) {
     try {
-      const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+      const { email, password } = updatePasswordDto;
+      const hashedPassword = await bcrypt.hash(password, 10);
+      let user;
+      if (updatePasswordDto.role === Role.USER) {
+      user = await this.prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      });
+    } else {
+      user = await this.prisma.organizer.update({
+        where: { email },
+        data: { password: hashedPassword },
+      });
+    }
+
+    return {
+        success: true,
+        message: 'Password updated successfully',
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      };
+    } catch (error) {
+      throw new BadRequestException('Error during update password process');
+    }
+  }
+
+  async sendVerificationCode(sendOtpDto: SendOtpDto) {
+    try {
+      const { email, role } = sendOtpDto;
+      const verificationCode = Math.floor(
+        1000 + Math.random() * 9000,
+      ).toString();
       let user;
 
       if (role === Role.USER) {
@@ -115,12 +161,22 @@ export class AuthService {
       };
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new NotFoundException(`User with email ${email} not found`);
+        throw new NotFoundException(
+          `User with email ${sendOtpDto.email} not found`,
+        );
       }
       throw new BadRequestException('Error sending verification code');
     }
   }
 
+  async checkValidityOfToken(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+      return decoded;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
   async verifyOtp(verifyOtpDto: VerifyOtpDto) {
     try {
       const { email, code, role } = verifyOtpDto;
@@ -166,7 +222,10 @@ export class AuthService {
         },
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException || error instanceof NotFoundException) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       throw new BadRequestException('Error verifying OTP');

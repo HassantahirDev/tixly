@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Req } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Req, Query } from "@nestjs/common";
 import { EventService } from "./event.service";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -28,6 +28,14 @@ export class EventController {
   @ApiResponse({ status: 200, description: 'List of all Events.' })
   findAll(@Req() req) {
     return this.eventService.findAll(req.user.id);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search events by title, description, or location' })
+  @ApiResponse({ status: 200, description: 'List of events matching the search query' })
+  @ApiResponse({ status: 400, description: 'No events found' })
+  searchEvents(@Query('query') query: string) {
+    return this.eventService.searchEvents(query);
   }
 
   @UseGuards(JwtAuthGuard)
