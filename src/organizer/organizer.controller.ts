@@ -1,9 +1,10 @@
 
-import { Controller, Get, Post, Body, Param, Delete, Put } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, Delete, Put, Req, UseGuards } from "@nestjs/common";
 import { OrganizerService } from "./organizer.service";
 import { CreateOrganizerDto } from "./dto/create-organizer.dto";
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateOrganizerDto } from "./dto/update-organizer.dto";
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 
 @ApiTags('Organizer')
 @Controller("organizer")
@@ -31,6 +32,13 @@ export class OrganizerController {
     return this.organizerService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post("statistics")
+  @ApiOperation({ summary: 'Get Organizer Statistics' })
+  @ApiResponse({ status: 200, description: 'Organizer statistics fetched successfully.' })
+  getOrganizerStatistics(@Req() req) {
+    return this.organizerService.getOrganizerStatistics(req.user.id);
+  }
   @Post("disapproveTicketsPayment/:id")
   @ApiOperation({ summary: 'Disapprove a Payment' })
   @ApiResponse({ status: 200, description: 'The Payment has been successfully disapproved.' })

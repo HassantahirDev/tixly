@@ -111,6 +111,39 @@ export class OrganizerService {
     };
   }
 
+  async getOrganizerStatistics(id: string) {
+      const organizer = await this.prisma.organizer.findUnique({
+        where: { id },
+      });
+
+      if (!organizer) {
+        throw new NotFoundException(`Organizer with id ${id} not found`);
+      }
+    
+    const eventsCount = await this.prisma.event.count({
+      where: { organizerId: id },
+    });
+
+   
+    const totalEarnings = await this.prisma.ticketsPayment.aggregate({
+      where: { Event: { organizerId: id } },
+      _sum: { amount: true },
+    });
+
+    // Get total attendees count
+    const totalAttendees = await this.prisma.ticketsPayment.aggregate({
+      where: { Event: { organizerId: id } },
+      _sum: { quantity: true },
+    });
+
+    return {
+      success: true,
+      data: { eventsCount, totalEarnings, totalAttendees },
+      message: 'Organizer statistics fetched successfully',
+    };
+    
+  }
+
   async approveTicketsPayment(id: string) {
     console.log('EventRegistrationPaymentModule', id);
 
