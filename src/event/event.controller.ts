@@ -1,12 +1,11 @@
-
 import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Req, Query } from "@nestjs/common";
 import { EventService } from "./event.service";
 import { CreateEventDto } from "./dto/create-event.dto";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
-@ApiTags('Event')
-@Controller("event")
+@ApiTags('Events')
+@Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
@@ -62,5 +61,40 @@ export class EventController {
   @ApiResponse({ status: 404, description: 'Event not found.' })
   remove(@Param("id") id: string) {
     return this.eventService.delete(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('top/featured')
+  @ApiOperation({ summary: 'Get featured events' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns top 5 featured events based on popularity and engagement' 
+  })
+  getFeaturedEvents() {
+    return this.eventService.getFeaturedEvents();
+  }
+
+  @Get('top-by-location')
+  @ApiOperation({ summary: 'Get top events by location' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns top events in a specific location' 
+  })
+  @ApiQuery({ 
+    name: 'location', 
+    required: true, 
+    description: 'Location to search events in' 
+  })
+  @ApiQuery({ 
+    name: 'limit', 
+    required: false, 
+    description: 'Number of events to return (default: 10)' 
+  })
+  getTopEventsByLocation(
+    @Query('location') location: string,
+    @Query('limit') limit?: number
+  ) {
+    return this.eventService.getTopEventsByLocation(location, limit);
   }
 }

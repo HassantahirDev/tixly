@@ -3,11 +3,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 export class LoginDto {
-  @ApiProperty({ example: 'user@example.com', description: 'User email address' })
+  @ApiProperty({ example: 'Ressie54@gmail.com', description: 'User email address' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'StrongPassword123', description: 'User password' })
+  @ApiProperty({ example: 'password123', description: 'User password' })
   @IsString()
   password: string;
 

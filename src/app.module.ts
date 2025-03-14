@@ -5,7 +5,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { EventModule } from './event/event.module';
-
+import { EventInteractionModule } from './event-interaction/event-interaction.module';
 import { OrganizerModule } from './organizer/organizer.module';
 import { AdminModule } from './admin/admin.module';
 import { EventRegistrationPaymentModule } from './event-registration-payment/event-registration-payment.module';
@@ -15,6 +15,7 @@ import { AdminBankDetailsModule } from './admin-bank-details/admin-bank-details.
 import { ImageModule } from './image/image.module';
 import { TicketsPaymentModule } from './tickets-payment/tickets-payment.module';
 import { EventCategoryModule } from './event-category/event-category.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -31,6 +32,8 @@ import { EventCategoryModule } from './event-category/event-category.module';
     AdminBankDetailsModule,
     ImageModule,
     EventCategoryModule,
+    EventInteractionModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
