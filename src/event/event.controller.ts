@@ -75,7 +75,7 @@ export class EventController {
     return this.eventService.getFeaturedEvents();
   }
 
-  @Get('top-by-location')
+  @Post('top-by-location')
   @ApiOperation({ summary: 'Get top events by location' })
   @ApiResponse({ 
     status: 200, 
