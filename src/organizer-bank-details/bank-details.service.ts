@@ -1,4 +1,3 @@
-
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateOrganizerBankDetailsDto } from "./dto/create-bank-details.dto";
@@ -80,6 +79,24 @@ export class BankDetailsService {
         throw new NotFoundException(`BankDetails with id ${id} not found for deletion`);
       }
       throw new BadRequestException('Error deleting record.');
+    }
+  }
+
+  async findByOrganizerIdAndBankName(organizerId: string, bankName?: string) {
+    try {
+      const BankDetails = await this.prisma.organizerBankDetails.findMany({
+        where: {
+          organizerId,
+          ...(bankName && { bankName: { contains: bankName, mode: 'insensitive' } }),
+        },
+      });
+      return {
+        success: true,
+        data: BankDetails,
+        message: "Bank Details fetched successfully",
+      };
+    } catch (error) {
+      throw new BadRequestException('Error fetching records.');
     }
   }
 }

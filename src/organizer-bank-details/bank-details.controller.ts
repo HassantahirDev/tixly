@@ -1,8 +1,7 @@
-
-import { Controller, Get, Post, Body, Param, Delete, Put } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, Delete, Put, Query } from "@nestjs/common";
 import { BankDetailsService } from "./bank-details.service";
 import { CreateOrganizerBankDetailsDto } from "./dto/create-bank-details.dto";
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('BankDetails')
 @Controller("bankDetails")
@@ -45,5 +44,16 @@ export class BankDetailsController {
   @ApiResponse({ status: 404, description: 'BankDetails not found.' })
   remove(@Param("id") id: string) {
     return this.bankDetailsService.delete(id);
+  }
+
+  @Get('organizer/:id')
+  @ApiOperation({ summary: 'Get BankDetails for an Organizer by ID and optionally filter by bank name' })
+  @ApiQuery({ name: 'bankName', required: false, type: String, description: 'Filter by bank name' })
+  @ApiResponse({ status: 200, description: 'List of BankDetails for the specified Organizer.' })
+  findByOrganizerIdAndBankName(
+    @Param('id') organizerId: string,
+    @Query('bankName') bankName?: string
+  ) {
+    return this.bankDetailsService.findByOrganizerIdAndBankName(organizerId, bankName);
   }
 }
