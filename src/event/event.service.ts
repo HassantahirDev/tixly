@@ -19,7 +19,10 @@ export class EventService {
         events = await this.prisma.event.findMany({
           where: {
             approvedByAdmin: true,
-            startTime: {gt: new Date(new Date().setHours(new Date().getHours() + 1)) }, capacity: {gt: 0}
+            startTime: {
+              gt: new Date(new Date().setHours(new Date().getHours() + 1)),
+            },
+            capacity: { gt: 0 },
           },
         });
       } else {
@@ -64,7 +67,14 @@ export class EventService {
       let event;
       if (user) {
         event = await this.prisma.event.findUnique({
-          where: { id, approvedByAdmin: true, startTime: {gt: new Date(new Date().setHours(new Date().getHours() + 1)) }, capacity: {gt: 0} },
+          where: {
+            id,
+            approvedByAdmin: true,
+            startTime: {
+              gt: new Date(new Date().setHours(new Date().getHours() + 1)),
+            },
+            capacity: { gt: 0 },
+          },
         });
       } else {
         event = await this.prisma.event.findUnique({ where: { id } });
@@ -149,12 +159,9 @@ export class EventService {
             { capacity: { gte: 200 } },
             { startTime: { gt: new Date() } },
             {
-              OR: [
-                { comments: { some: {} } },
-                { favorites: { some: {} } }
-              ]
-            }
-          ]
+              OR: [{ comments: { some: {} } }, { favorites: { some: {} } }],
+            },
+          ],
         },
         include: {
           comments: {
@@ -162,48 +169,43 @@ export class EventService {
               user: true,
               replies: {
                 include: {
-                  user: true
-                }
-              }
-            }
+                  user: true,
+                },
+              },
+            },
           },
           favorites: true,
           _count: {
             select: {
               comments: true,
               favorites: true,
-              TicketsPayment: true
-            }
+              TicketsPayment: true,
+            },
           },
           organizer: {
             select: {
               name: true,
-              profilePic: true
-            }
+              profilePic: true,
+            },
           },
           EventCategory: {
             select: {
               name: true,
-              attachment: true
-            }
-          }
+              attachment: true,
+            },
+          },
         },
-        orderBy: [
-          { capacity: 'desc' },
-          { price: 'desc' }
-        ],
-        take: 1
+        orderBy: [{ capacity: 'desc' }, { price: 'desc' }],
+        take: 1,
       });
 
-    
-
       // Calculate popularity score for each event
-      const eventsWithScore = featuredEvents.map(event => ({
+      const eventsWithScore = featuredEvents.map((event) => ({
         ...event,
-        popularityScore: 
-          (event._count.comments * 2) + // Each comment counts as 2 points
-          (event._count.favorites * 3) + // Each favorite counts as 3 points
-          (event._count.TicketsPayment * 5) // Each ticket purchase counts as 5 points
+        popularityScore:
+          event._count.comments * 2 + // Each comment counts as 2 points
+          event._count.favorites * 3 + // Each favorite counts as 3 points
+          event._count.TicketsPayment * 5, // Each ticket purchase counts as 5 points
       }));
 
       // Sort by popularity score
@@ -212,7 +214,7 @@ export class EventService {
       return {
         success: true,
         data: eventsWithScore,
-        message: 'Featured events fetched successfully'
+        message: 'Featured events fetched successfully',
       };
     } catch (error) {
       throw new BadRequestException('Error fetching featured events.');
@@ -233,65 +235,67 @@ export class EventService {
       const topEvents = await this.prisma.event.findMany({
         where: {
           AND: [
-            { 
+            {
               location: {
                 contains: location,
-                mode: 'insensitive'
-              }
+                mode: 'insensitive',
+              },
             },
             { approvedByAdmin: true },
-            { startTime: { gt: new Date() } }
-          ]
+            { startTime: { gt: new Date() } },
+          ],
         },
         include: {
           _count: {
             select: {
               comments: true,
               favorites: true,
-              TicketsPayment: true
-            }
+              TicketsPayment: true,
+            },
           },
           organizer: {
             select: {
               name: true,
-              profilePic: true
-            }
+              profilePic: true,
+            },
           },
           EventCategory: {
             select: {
               name: true,
-              attachment: true
-            }
-          }
+              attachment: true,
+            },
+          },
         },
         orderBy: [
-          { 
+          {
             TicketsPayment: {
-              _count: 'desc'
-            }
+              _count: 'desc',
+            },
           },
-          { capacity: 'desc' }
+          { capacity: 'desc' },
         ],
-        take: limit
+        take: limit,
       });
 
       // Calculate engagement score for ranking
-      const eventsWithEngagement = topEvents.map(event => ({
+      const eventsWithEngagement = topEvents.map((event) => ({
         ...event,
-        engagementScore: 
-          (event._count.TicketsPayment * 10) + // Ticket sales have highest weight
-          (event._count.favorites * 5) +        // Favorites are second
-          (event._count.comments * 2),          // Comments have lowest weight
-        availableCapacity: event.capacity - event._count.TicketsPayment // Calculate remaining tickets
+        engagementScore:
+          event._count.TicketsPayment * 10 + // Ticket sales have highest weight
+          event._count.favorites * 5 + // Favorites are second
+          event._count.comments * 2, // Comments have lowest weight
+        availableCapacity: event.capacity - event._count.TicketsPayment, // Calculate remaining tickets
       }));
 
       // Sort by engagement score
-      eventsWithEngagement.sort((a, b) => b.engagementScore - a.engagementScore);
+      eventsWithEngagement.sort(
+        (a, b) => b.engagementScore - a.engagementScore,
+      );
 
       return {
         success: true,
         data: eventsWithEngagement,
-        message: `Top ${limit} events in ${location} fetched successfully`
+        message: `Top ${limit} events in ${location} fetched successfully`,
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -299,5 +303,28 @@ export class EventService {
       }
       throw new BadRequestException('Error fetching top events by location.');
     }
+  }
+
+  async findAllFavouritesForAUser(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const Favorites = await this.prisma.event.findMany({
+      where: {
+        favorites: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: Favorites,
+      message: 'Favorites fetched successfully',
+    };
   }
 }

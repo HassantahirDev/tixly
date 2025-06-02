@@ -234,18 +234,23 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     try {
-      const { email, password, role } = loginDto;
+      const { email, password, role  } = loginDto;
+
+      let userRole = role
 
       let user;
-      if (role === Role.USER) {
+      if (userRole === Role.USER) {
         user = await this.prisma.user.findUnique({
           where: { email },
         });
-      } else if(role === Role.ORGANIZER) {
+        if (user?.isAdmin === true) {
+          userRole = Role.ADMIN;
+        }
+      } else if(userRole === Role.ORGANIZER) {
         user = await this.prisma.organizer.findUnique({
           where: { email },
         });
-      }else if(role === Role.ADMIN) {
+      }else if(userRole === Role.ADMIN) {
         user = await this.prisma.admin.findUnique({
           where: { email },
         });
@@ -264,7 +269,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      const payload = { sub: user.id, email: user.email, role };
+      const payload = { sub: user.id, email: user.email, role: userRole };
       return {
         success: true,
         message: 'Login successful',
@@ -272,13 +277,14 @@ export class AuthService {
           access_token: this.jwtService.sign(payload),
           name: user.name,
           email: user.email,
-          role,
+          role: userRole,
         },
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
+      console.error('Login error:', error);
       throw new BadRequestException('Error during login process');
     }
   }

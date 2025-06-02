@@ -3,6 +3,7 @@ import { Controller, Get, Post, Body, Param, Delete, Put } from "@nestjs/common"
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @ApiTags('User')
 @Controller("user")
@@ -35,7 +36,7 @@ export class UserController {
   @ApiOperation({ summary: 'Update a User by ID' })
   @ApiResponse({ status: 200, description: 'The User has been successfully updated.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  update(@Param("id") id: string, @Body() updateDto: CreateUserDto) {
+  update(@Param("id") id: string, @Body() updateDto: UpdateUserDto) {
     return this.userService.update(id, updateDto);
   }
 

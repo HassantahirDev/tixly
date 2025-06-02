@@ -29,6 +29,14 @@ export class EventController {
     return this.eventService.findAll(req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all Favourite Events for a specific user' })
+  @Get('favourites')
+  findAllFavourites(@Req() req) {
+    return this.eventService.findAllFavouritesForAUser(req.user.id);
+  }
+
   @Get('search')
   @ApiOperation({ summary: 'Search events by title, description, or location' })
   @ApiResponse({ status: 200, description: 'List of events matching the search query' })
