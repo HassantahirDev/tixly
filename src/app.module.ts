@@ -16,6 +16,7 @@ import { ImageModule } from './image/image.module';
 import { TicketsPaymentModule } from './tickets-payment/tickets-payment.module';
 import { EventCategoryModule } from './event-category/event-category.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { NotificationsGateway } from './notification/notification.gateway';
 
 @Module({
   imports: [
@@ -36,6 +37,6 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, NotificationsGateway]
 })
 export class AppModule {}

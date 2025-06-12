@@ -6,10 +6,11 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTicketPaymentDto } from './dto/create-ticket-payment.dto';
 import { UpdateTicketPaymentDto } from './dto/update-ticket-payment.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class TicketsPaymentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notificationService: NotificationService) {}
 
   async findAll() {
     try {
@@ -65,6 +66,13 @@ export class TicketsPaymentService {
         where: { id: data.eventId },
         data: { capacity: { decrement: data.quantity } },
       });
+
+      await this.notificationService.create({
+        userId,
+        eventId: data.eventId,
+        message: `You have successfully purchased ${data.quantity} tickets for the event "${event.title}". Total amount: ${totalAmount}`,
+      });
+
       return {
         success: true,
         data: { TicketsPayment, event },

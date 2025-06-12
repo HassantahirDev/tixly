@@ -29,6 +29,15 @@ export class CreateNotificationDto {
   @IsOptional()
   adminId?: string;
 
+   @ApiProperty({
+    description: 'Event ID (optional)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false
+  })
+  @IsUUID()
+  @IsOptional()
+  eventId?: string;
+
   @ApiProperty({
     description: 'Notification message',
     example: 'Your event has been approved!'

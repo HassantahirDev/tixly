@@ -6,27 +6,42 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import e from 'express';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class EventService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notificationService: NotificationService) {}
 
   async findAll(userId: string) {
     try {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
       let events;
-      if (user) {
-        events = await this.prisma.event.findMany({
-          where: {
-            approvedByAdmin: true,
-            startTime: {
-              gt: new Date(new Date().setHours(new Date().getHours() + 1)),
+      if (userId) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+
+        if (user) {
+          console.log('User found:', user);
+          events = await this.prisma.event.findMany({
+            where: {
+              approvedByAdmin: true,
+              startTime: {
+                gt: new Date(new Date().setHours(new Date().getHours() + 1)),
+              },
+              capacity: { gt: 0 },
             },
-            capacity: { gt: 0 },
+            include: {
+              organizer: true,
+            },
+          });
+        }
+      } else {
+        events = await this.prisma.event.findMany({
+          include: {
+            organizer: true,
+            TicketsPayment: true,
           },
         });
-      } else {
-        events = await this.prisma.event.findMany();
       }
 
       return {
@@ -61,24 +76,44 @@ export class EventService {
     }
   }
 
-  async findOne(id: string, userId: string) {
+  async findOne(id: string) {
     try {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      let event;
-      if (user) {
-        event = await this.prisma.event.findUnique({
-          where: {
-            id,
-            approvedByAdmin: true,
-            startTime: {
-              gt: new Date(new Date().setHours(new Date().getHours() + 1)),
+      const event = await this.prisma.event.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              comments: true,
+              favorites: true,
+              TicketsPayment: true,
             },
-            capacity: { gt: 0 },
           },
-        });
-      } else {
-        event = await this.prisma.event.findUnique({ where: { id } });
-      }
+          comments:{
+            include:{
+              user: true,
+              likes: true,
+              replies:{
+                include:{
+                  user: true,
+                  likes: true
+                }
+              }
+            }
+          },
+          organizer: {
+            select: {
+              name: true,
+              profilePic: true,
+            },
+          },
+          EventCategory: {
+            select: {
+              name: true,
+              attachment: true,
+            },
+          },
+        },
+      });
 
       if (!event) {
         throw new NotFoundException(`Event not found`);
@@ -97,7 +132,9 @@ export class EventService {
 
   async create(data: CreateEventDto) {
     try {
+      console.log('Creating event with data:', data.eventCategoryId);
       const Event = await this.prisma.event.create({ data });
+
       return {
         success: true,
         data: Event,
@@ -326,5 +363,98 @@ export class EventService {
       data: Favorites,
       message: 'Favorites fetched successfully',
     };
+  }
+
+  async getUpcomingEvents() {
+    try {
+      // Get events that are due in two days or less from now
+      const now = new Date();
+      const twoDaysLater = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+      const upcomingEvents = await this.prisma.event.findMany({
+        where: {
+          // approvedByAdmin: true,
+          startTime: {
+            gte: now,
+            lte: twoDaysLater,
+          },
+        },
+        include: {
+          _count: {
+            select: {
+              comments: true,
+              favorites: true,
+              TicketsPayment: true,
+            },
+          },
+          organizer: {
+            select: {
+              name: true,
+              profilePic: true,
+            },
+          },
+          EventCategory: {
+            select: {
+              name: true,
+              attachment: true,
+            },
+          },
+        },
+        orderBy: [{ startTime: 'asc' }],
+      });
+      return {
+        success: true,
+        data: upcomingEvents,
+        message: 'Upcoming events (within 2 days) fetched successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException('Error fetching upcoming events.');
+    }
+  }
+
+  async getOngoingEvents() {
+    try {
+      // Ongoing: from 2 hours before start to 30 minutes after end
+      const now = new Date();
+      const ongoingEvents = await this.prisma.event.findMany({
+        where: {
+          startTime: {
+            lte: new Date(now.getTime() + 2 * 60 * 60 * 1000), // starts in <= 2 hours
+          },
+          endTime: {
+            gte: new Date(now.getTime() - 30 * 60 * 1000), // ends in >= 30 min ago
+          },
+        },
+        include: {
+          _count: {
+            select: {
+              comments: true,
+              favorites: true,
+              TicketsPayment: true,
+            },
+          },
+          organizer: {
+            select: {
+              name: true,
+              profilePic: true,
+            },
+          },
+          EventCategory: {
+            select: {
+              name: true,
+              attachment: true,
+            },
+          },
+        },
+        orderBy: [{ startTime: 'asc' }],
+      });
+      return {
+        success: true,
+        data: ongoingEvents,
+        message:
+          'Ongoing events (2h before start to 30min after end) fetched successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException('Error fetching ongoing events.');
+    }
   }
 }

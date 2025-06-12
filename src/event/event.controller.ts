@@ -3,6 +3,7 @@ import { EventService } from "./event.service";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { Q } from "@faker-js/faker/dist/airline-CBNP41sR";
 
 @ApiTags('Events')
 @Controller('events')
@@ -16,17 +17,22 @@ export class EventController {
   @ApiOperation({ summary: 'Create a new Event' })
   @ApiResponse({ status: 201, description: 'The Event has been successfully created.' })
   create(@Body() createDto: CreateEventDto, @Req() req) {
-    
+    console.log("Creating event with data:", createDto);
     return this.eventService.create(createDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get()
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    description: 'Filter events by user ID (optional)',
+    type: String
+  })
   @ApiOperation({ summary: 'Get all Events' })
   @ApiResponse({ status: 200, description: 'List of all Events.' })
-  findAll(@Req() req) {
-    return this.eventService.findAll(req.user.id);
+  findAll(@Query('userId') userId?: string) {
+    return this.eventService.findAll(userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -45,14 +51,27 @@ export class EventController {
     return this.eventService.searchEvents(query);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Get('upcoming')
+  @ApiOperation({ summary: 'Get all upcoming events due in two days or less' })
+  @ApiResponse({ status: 200, description: 'List of upcoming events (within 2 days).' })
+  getUpcomingEvents() {
+    return this.eventService.getUpcomingEvents();
+  }
+
+  @Get('ongoing')
+  @ApiOperation({ summary: 'Get all ongoing events (2 hours before start to 30 minutes after end)' })
+  @ApiResponse({ status: 200, description: 'List of ongoing events.' })
+  getOngoingEvents() {
+    return this.eventService.getOngoingEvents();
+  }
+
   @ApiBearerAuth()
   @Get(":id")
   @ApiOperation({ summary: 'Get a Event by ID' })
   @ApiResponse({ status: 200, description: 'The Event with the given ID.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  findOne(@Param("id") id: string, @Req() req) {
-    return this.eventService.findOne(id, req.user.id);
+  findOne(@Param("id") id: string) {
+    return this.eventService.findOne(id);
   }
 
   @Put(":id")
@@ -105,4 +124,6 @@ export class EventController {
   ) {
     return this.eventService.getTopEventsByLocation(location, limit);
   }
+
+  
 }

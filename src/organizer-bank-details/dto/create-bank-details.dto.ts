@@ -22,6 +22,13 @@ export class CreateOrganizerBankDetailsDto {
   })
   @IsString()
   accountNumber: string;
+
+  @ApiProperty({
+    description: 'Bank account Holder name',
+    example: 'John Doe'
+  })
+  @IsString()
+  accountHolder: string;
 }
 
 

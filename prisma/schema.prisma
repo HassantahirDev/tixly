@@ -51,6 +51,7 @@ model Organizer {
 
 model OrganizerBankDetails {
   id            String         @id @default(uuid())
+  accountHolder String?
   organizerId   String
   organizer     Organizer      @relation(fields: [organizerId], references: [id])
   bankName      String
@@ -109,9 +110,10 @@ model Event {
   TicketsPayment           TicketsPayment[]
   EventRegistrationPayment EventRegistrationPayment[]
   EventCategory            EventCategory?             @relation(fields: [eventCategoryId], references: [id])
-  eventCategoryId          String?                    @default("035436ea-e33a-4d35-9d9e-e2e155c8502a")
+  eventCategoryId          String?                    
   comments                 Comment[]
   favorites                Favorite[]
+  notifications           Notification[]
 }
 
 // Event Registration Model
@@ -175,11 +177,14 @@ model Notification {
   id                     String                @id @default(uuid())
   userId                 String?
   user                   User?                 @relation(fields: [userId], references: [id])
+  eventId                String?
+  event                  Event?                @relation(fields: [eventId], references: [id])
   organizerId            String?
   organizer              Organizer?            @relation(fields: [organizerId], references: [id])
   adminId                String?
   admin                  Admin?                @relation(fields: [adminId], references: [id])
   message                String
+  read                   Boolean                @default(false)
   createdAt              DateTime              @default(now())
   OrganizerBankDetails   OrganizerBankDetails? @relation(fields: [organizerBankDetailsId], references: [id])
   organizerBankDetailsId String?

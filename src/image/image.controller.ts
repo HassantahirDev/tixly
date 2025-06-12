@@ -2,6 +2,7 @@ import { Controller, Post, Delete, UploadedFile, UseInterceptors, Body, Param } 
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ImageService } from './image.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as multer from 'multer';
 
 
 @Controller('image')
@@ -12,8 +13,9 @@ export class ImageController {
   @Post('upload/single')
   @ApiOperation({ summary: 'Post operation' })
   @ApiResponse({ status: 200, description: 'Success' })
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', { storage: multer.memoryStorage() }))
   async uploadSingleImage(@UploadedFile() file: Express.Multer.File): Promise<any> {
+    console.log('Received file:', file);
     return this.cloudinaryService.uploadSingleImage(file);
   }
 
