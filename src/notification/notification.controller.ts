@@ -1,8 +1,9 @@
 
-import { Controller, Get, Post, Body, Param, Delete, Put } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Req } from "@nestjs/common";
 import { NotificationService } from "./notification.service";
 import { CreateNotificationDto } from "./dto/create-notification.dto";
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 
 @ApiTags('Notification')
 @Controller("notification")
@@ -21,6 +22,24 @@ export class NotificationController {
   @ApiResponse({ status: 200, description: 'List of all Notifications.' })
   findAll() {
     return this.notificationService.findAll();
+  }
+
+  @ApiBearerAuth()
+  @Get('me/:userId')
+  @ApiParam({ name: 'userId', description: 'ID of the user to get notifications for' })
+  @ApiOperation({ summary: 'Get all Notifications for the logged-in user' })
+  @ApiResponse({ status: 200, description: 'List of all Notifications for the logged-in user.' })
+  findAllForUser(@Param('userId') userId: string) {
+    return this.notificationService.findAllForUser(userId);
+  }
+
+  @ApiBearerAuth()
+  @Get('mark-as-read/:userId')
+  @ApiParam({ name: 'userId', description: 'ID of the user to get notifications for' })
+  @ApiOperation({ summary: 'Mark all Notifications as read for the logged-in user' })
+  @ApiResponse({ status: 200, description: 'All Notifications marked as read for the logged-in user.' })
+  markAllAsReadForUser(@Param('userId') userId: string) {
+    return this.notificationService.markAllAsReadForUser(userId);
   }
 
   @Get(":id")

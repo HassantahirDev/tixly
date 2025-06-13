@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Body, Param, Req, Delete, Put, UseGuards } from "@nestjs/common";
 import { TicketsPaymentService } from "./tickets-payment.service";
 import { CreateTicketPaymentDto } from "./dto/create-ticket-payment.dto";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { UpdateTicketPaymentDto } from "./dto/update-ticket-payment.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 
@@ -26,6 +26,15 @@ export class TicketsPaymentController {
   findAll() {
     return this.ticketsPaymentService.findAll();
   }
+
+   @Get("me/:userId")
+   @ApiParam({ name: 'userId', description: 'ID of the user to get their TicketsPayments' })
+  @ApiOperation({ summary: 'Get all TicketsPayments' })
+  @ApiResponse({ status: 200, description: 'List of all TicketsPayments.' })
+  findAllTicketPaymentOfAUser(@Param("userId") userId: string) {
+    return this.ticketsPaymentService.findAllTicketPaymentOfAUser(userId);
+  }
+
 
   @Get(":id")
   @ApiOperation({ summary: 'Get a TicketsPayment by ID' })

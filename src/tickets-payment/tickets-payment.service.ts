@@ -25,6 +25,25 @@ export class TicketsPaymentService {
     }
   }
 
+   async findAllTicketPaymentOfAUser(userId: string) {
+    try {
+      const TicketsPayment = await this.prisma.ticketsPayment.findMany({
+        where: { userId },
+        include:{
+          Event: true,
+          User: true
+        }
+      });
+      return {
+        success: true,
+        data: TicketsPayment,
+        message: 'TicketsPayments fetched successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException('Error fetching all records.');
+    }
+  }
+
   async findOne(id: string) {
     try {
       const TicketsPayment = await this.prisma.ticketsPayment.findUnique({
