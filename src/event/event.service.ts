@@ -54,6 +54,36 @@ export class EventService {
     }
   }
 
+  async updateEventStatus(id: string, status: boolean) {
+    try {
+      console.log(`Updating event with id ${id} to status ${status}`);
+      const event = await this.prisma.event.update({
+        where: { id },
+        data: { approvedByAdmin: status, status: status ? 'APPROVED' : 'REJECTED' },
+      });
+      if (!event) {
+        throw new NotFoundException(`Event with id ${id} not found`);
+      }
+      // // Notify the organizer about the status change
+      // const notificationData = {
+      //   userId: event.organizerId,
+      //   eventId: id,
+      //   message: `Your event "${event.title}" has been ${status ? 'approved' : 'rejected'} by the admin.`,
+      // };
+      // await this.notificationService.create(notificationData);
+      return {
+        success: true,
+        data: event,
+        message: `Event ${status ? 'approved' : 'rejected'} successfully`,
+      };
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Event with id ${id} not found for update`);
+      }
+      throw new BadRequestException('Error updating event status.');
+    }
+  }
+
   async searchEvents(query: string) {
     try {
       const events = await this.prisma.event.findMany({
@@ -102,6 +132,7 @@ export class EventService {
           },
           organizer: {
             select: {
+              id: true,
               name: true,
               profilePic: true,
             },

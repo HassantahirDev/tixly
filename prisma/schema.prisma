@@ -11,11 +11,15 @@ datasource db {
 model User {
   id         String  @id @default(uuid())
   email      String  @unique
-  password   String
+  password   String?
   username  String? @unique
   profilePic String?
   name       String
   isAdmin    Boolean @default(false)
+  
+  // Google OAuth fields
+  googleId         String? @unique
+  isGoogleAuth     Boolean @default(false)
 
   notifications Notification[]
   createdAt     DateTime       @default(now())
@@ -36,12 +40,17 @@ model User {
 model Organizer {
   id               String                     @id @default(uuid())
   email            String                     @unique
-  password         String
+  password         String?
   profilePic       String?
   name             String
   bankDetails      OrganizerBankDetails[]
   verificationCode String?
   isVerified       Boolean                    @default(false)
+  
+  // Google OAuth fields
+  googleId         String? @unique
+  isGoogleAuth     Boolean @default(false)
+  
   eventsCreated    Event[]
   payments         EventRegistrationPayment[]
   notifications    Notification[]
@@ -81,6 +90,7 @@ model Admin {
 model EventCategory {
   id        String   @id @default(uuid())
   name      String
+  description String?
   attachment String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +114,7 @@ model Event {
   organizerId     String
   organizer       Organizer @relation(fields: [organizerId], references: [id])
   approvedByAdmin Boolean   @default(false)
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

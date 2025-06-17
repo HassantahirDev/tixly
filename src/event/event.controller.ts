@@ -65,6 +65,16 @@ export class EventController {
     return this.eventService.getOngoingEvents();
   }
 
+
+  @ApiBearerAuth()
+  @Post("update-status/:eventId")
+  @ApiOperation({ summary: 'Update the status of an event by ID' })
+  @ApiResponse({ status: 200, description: 'The status of the event has been successfully updated.' })
+  @ApiResponse({ status: 404, description: 'Event not found.' })
+  updateEventStatus(@Param("eventId") eventId: string, @Body('status') status: boolean) {
+    return this.eventService.updateEventStatus(eventId, status);
+  }
+  
   @ApiBearerAuth()
   @Get(":id")
   @ApiOperation({ summary: 'Get a Event by ID' })

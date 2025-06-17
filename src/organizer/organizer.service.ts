@@ -32,16 +32,34 @@ export class OrganizerService {
   }
 
   async findOne(id: string) {
-    try {
-      const Organizer = await this.prisma.organizer.findUnique({
-        where: { id },
-      });
+    try {    const Organizer = await this.prisma.organizer.findUnique({
+      where: { id },
+      include: {
+        eventsCreated: {
+          include: {
+            TicketsPayment: true, // Include ticket payments for event stats
+          },
+        },
+        bankDetails: true, // Include bank details if needed
+      },
+    });
+  
       if (!Organizer) {
         throw new NotFoundException(`Organizer with id ${id} not found`);
       }
+
+      // Filter successful events (status === 'ACCEPTED')
+      const successfulEvents = Organizer.eventsCreated.filter(
+        (event) => event.status === 'ACCEPTED'
+      );
+      const successfulEventsCount = successfulEvents.length;
+
       return {
         success: true,
-        data: Organizer,
+        data: {
+          ...Organizer,
+          successfulEventsCount
+        },
         message: 'Organizer fetched successfully',
       };
     } catch (error) {

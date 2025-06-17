@@ -15,6 +15,7 @@ import { Role } from '@prisma/client';
 import { MailerService } from 'src/mailer/mailer.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { GoogleOAuthDto } from './dto/google-oauth.dto';
 
 @Injectable()
 export class AuthService {
@@ -286,6 +287,144 @@ export class AuthService {
       }
       console.error('Login error:', error);
       throw new BadRequestException('Error during login process');
+    }
+  }
+
+  async googleLogin(googleUser: any) {
+    try {
+      const { googleId, email, name, profilePic } = googleUser;
+      
+      // Check if user exists with this email
+      let user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (user) {
+        // If user exists but doesn't have Google ID, update it
+        if (!user.googleId) {
+          user = await this.prisma.user.update({
+            where: { email },
+            data: {
+              googleId,
+              isGoogleAuth: true,
+              isVerified: true, // Google accounts are automatically verified
+              profilePic: profilePic || user.profilePic,
+            },
+          });
+        }
+      } else {
+        // Create new user with Google OAuth
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            name,
+            googleId,
+            profilePic,
+            isGoogleAuth: true,
+            isVerified: true, // Google accounts are automatically verified
+          },
+        });
+      }
+
+      const payload = { 
+        sub: user.id, 
+        email: user.email, 
+        role: user.isAdmin ? Role.ADMIN : Role.USER 
+      };
+
+      return {
+        success: true,
+        message: 'Google login successful',
+        data: {
+          access_token: this.jwtService.sign(payload),
+          name: user.name,
+          email: user.email,
+          role: user.isAdmin ? Role.ADMIN : Role.USER,
+          profilePic: user.profilePic,
+        },
+      };
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw new BadRequestException('Error during Google login process');
+    }
+  }
+
+  async googleOrganizerLogin(googleUser: any) {
+    try {
+      const { googleId, email, name, profilePic } = googleUser;
+      
+      // Check if organizer exists with this email
+      let organizer = await this.prisma.organizer.findUnique({
+        where: { email },
+      });
+
+      if (organizer) {
+        // If organizer exists but doesn't have Google ID, update it
+        if (!organizer.googleId) {
+          organizer = await this.prisma.organizer.update({
+            where: { email },
+            data: {
+              googleId,
+              isGoogleAuth: true,
+              isVerified: true, // Google accounts are automatically verified
+              profilePic: profilePic || organizer.profilePic,
+            },
+          });
+        }
+      } else {
+        // Create new organizer with Google OAuth
+        organizer = await this.prisma.organizer.create({
+          data: {
+            email,
+            name,
+            googleId,
+            profilePic,
+            isGoogleAuth: true,
+            isVerified: true, // Google accounts are automatically verified
+          },
+        });
+      }
+
+      const payload = { 
+        sub: organizer.id, 
+        email: organizer.email, 
+        role: Role.ORGANIZER 
+      };
+
+      return {
+        success: true,
+        message: 'Google organizer login successful',
+        data: {
+          access_token: this.jwtService.sign(payload),
+          name: organizer.name,
+          email: organizer.email,
+          role: Role.ORGANIZER,
+          profilePic: organizer.profilePic,
+        },
+      };
+    } catch (error) {
+      console.error('Google organizer login error:', error);
+      throw new BadRequestException('Error during Google organizer login process');
+    }
+  }
+
+  async googleOAuth(googleOAuthDto: GoogleOAuthDto) {
+    try {
+      const { email, name, googleId, profilePic, role } = googleOAuthDto;
+
+      if (role === Role.USER) {
+        return this.googleLogin({ googleId, email, name, profilePic });
+      } else if (role === Role.ORGANIZER) {
+        return this.googleOrganizerLogin({ googleId, email, name, profilePic });
+      } else {
+        throw new BadRequestException('Invalid role for Google OAuth');
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Google OAuth error:', error);
+      throw new BadRequestException('Error during Google OAuth process');
     }
   }
 }
